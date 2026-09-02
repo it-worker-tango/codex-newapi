@@ -1,0 +1,111 @@
+name: codex-newapi
+
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: codex-newapi-wireguard
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: ${TZ}
+      SERVERURL: ${SERVER_PUBLIC_IP}
+      SERVERPORT: ${WG_PORT}
+      PEERS: ${WG_PEERS}
+      PEERDNS: ${WG_PEER_DNS}
+      INTERNAL_SUBNET: ${WG_INTERNAL_SUBNET}
+      ALLOWEDIPS: ${WG_ALLOWED_IPS}
+      LOG_CONFS: "true"
+    volumes:
+      - ./data/wireguard:/config
+      - /lib/modules:/lib/modules:ro
+    ports:
+      - "${WG_PORT}:${WG_PORT}/udp"
+    sysctls:
+      net.ipv4.conf.all.src_valid_mark: "1"
+    networks:
+      - gateway
+
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api:latest
+    container_name: codex-newapi-cpa
+    restart: unless-stopped
+    ports:
+      - "${CPA_BIND}:${CPA_PORT}:8317"
+      - "8085:8085"
+      - "1455:1455"
+      - "54545:54545"
+      - "51121:51121"
+      - "11451:11451"
+    volumes:
+      - ./data/cliproxy/config.yaml:/CLIProxyAPI/config.yaml:ro
+      - ./data/cliproxy/auths:/root/.cli-proxy-api
+      - ./data/cliproxy/logs:/CLIProxyAPI/logs
+    networks:
+      - gateway
+
+  new-api:
+    image: calciumion/new-api:latest
+    container_name: codex-newapi-gateway
+    restart: unless-stopped
+    command: --log-dir /app/logs
+    ports:
+      - "${NEWAPI_BIND}:${NEWAPI_PORT}:3000"
+    environment:
+      SQL_DSN: postgresql://newapi:${POSTGRES_PASSWORD}@postgres:5432/newapi
+      REDIS_CONN_STRING: redis://:${REDIS_PASSWORD}@redis:6379
+      SESSION_SECRET: ${SESSION_SECRET}
+      TZ: ${TZ}
+      ERROR_LOG_ENABLED: "true"
+      BATCH_UPDATE_ENABLED: "true"
+      NODE_NAME: new-api-node-1
+    volumes:
+      - ./data/newapi:/data
+      - ./data/newapi/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gateway
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: codex-newapi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: newapi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: newapi
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U newapi -d newapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - gateway
+
+  redis:
+    image: redis:7-alpine
+    container_name: codex-newapi-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"${REDIS_PASSWORD}\" ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - gateway
+
+networks:
+  gateway:
+    driver: bridge

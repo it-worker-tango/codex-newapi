@@ -1,0 +1,10 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+data/
+backups/
+*.tar.gz
+*.sql
+*.log
+deployment/
