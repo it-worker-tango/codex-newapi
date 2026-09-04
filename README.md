@@ -46,6 +46,11 @@ docker compose ps
 
 详细操作见 [迁移与部署教程](docs/DEPLOYMENT.md)。
 
+## 教程目录
+
+- [当前部署与迁移指南](docs/DEPLOYMENT.md)：适用于本仓库的 WireGuard + CPA + NewAPI 一体化方案。
+- [CLIProxyAPI + NewAPI 首次部署教程](docs/archive/CLIProxyAPI-NewAPI教程.md)：之前编写的详细操作记录，包含渠道设置、授权、接口测试和运维说明；使用独立的旧版 Compose 布局。公开版已去除包含个人信息的截图。
+
 ## 默认端口
 
 | 端口 | 协议 | 服务 | 建议 |
