@@ -6,6 +6,7 @@
 - CLIProxyAPI（Codex OAuth → OpenAI 兼容接口）
 - NewAPI（统一 API 网关、用户与额度管理）
 - PostgreSQL + Redis
+- Nginx HTTPS：博客首页与 `/v1/*` API 路由
 - 初始化、备份、恢复和升级脚本
 
 ## 架构
@@ -39,6 +40,7 @@ cp .env.example .env
 ./scripts/init.sh
 docker compose pull
 docker compose up -d
+sudo ./scripts/setup-nginx.sh
 docker compose ps
 ```
 
@@ -56,8 +58,9 @@ docker compose ps
 | 端口 | 协议 | 服务 | 建议 |
 |---:|---|---|---|
 | 51820 | UDP | WireGuard | 云安全组放行 |
-| 3000 | TCP | NewAPI | 建议用 HTTPS 反向代理 |
-| 8317 | TCP | CLIProxyAPI | 默认仅绑定 `127.0.0.1` |
+| 80/443 | TCP | Nginx | 博客首页与 HTTPS API；云安全组放行 |
+| 3000 | TCP | NewAPI | 仅绑定 `127.0.0.1`，不对公网开放 |
+| 8317 | TCP | CLIProxyAPI | 仅绑定 `127.0.0.1`，不对公网开放 |
 | 8085/1455/54545/51121/11451 | TCP | OAuth 回调 | 仅授权期间按需放行 |
 
 ## 备份与恢复

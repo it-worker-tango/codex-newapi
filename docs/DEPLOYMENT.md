@@ -17,6 +17,8 @@ sudo usermod -aG docker "$USER"
 - `51820/UDP`：WireGuard
 - `3000/TCP`：NewAPI；配置 HTTPS 后可改为只放行 80/443
 
+当前仓库已内置 Nginx，因此应放行 `80/TCP` 和 `443/TCP`，无需在云安全组开放 3000 或 8317。
+
 CPA 的 `8317/TCP` 默认仅绑定服务器回环地址，不应在安全组中开放。
 
 ## 2. 下载并初始化
@@ -36,6 +38,7 @@ chmod +x scripts/*.sh
 docker compose config --quiet
 docker compose pull
 docker compose up -d
+sudo ./scripts/setup-nginx.sh
 docker compose ps
 ```
 
@@ -175,10 +178,19 @@ docker compose logs --tail=100 new-api
 
 ## 10. HTTPS 建议
 
-不要长期通过公网 HTTP 传输 NewAPI Key。可以在宿主机或 Compose 中增加 Caddy/Nginx：
+不要通过公网 HTTP 传输 NewAPI Key。仓库内置的 Nginx 配置实现：
 
 ```text
-api.example.com → 127.0.0.1:3000
+https://aitest.work/     → 静态技术博客
+https://aitest.work/v1/ → 127.0.0.1:3000/v1/
 ```
 
-配置 HTTPS 后，将 `.env` 中 `NEWAPI_BIND` 改为 `127.0.0.1`，仅由反向代理访问 NewAPI。
+执行 `sudo ./scripts/setup-nginx.sh` 会安装 Nginx、部署站点并通过 Certbot 申请证书。NewAPI 与 CPA 在 Compose 中固定绑定 `127.0.0.1`，只有 Nginx 可以从公网转发请求。
+
+OpenCode 的 Base URL 使用：
+
+```text
+https://aitest.work/v1
+```
+
+如果公网访问 80 正常但 443 超时，应在腾讯云安全组中增加入站规则 `TCP:443`；服务器本机防火墙无法代替云安全组规则。

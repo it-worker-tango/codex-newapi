@@ -34,7 +34,7 @@ services:
     container_name: codex-newapi-cpa
     restart: unless-stopped
     ports:
-      - "${CPA_BIND}:${CPA_PORT}:8317"
+      - "127.0.0.1:${CPA_PORT}:8317"
       - "8085:8085"
       - "1455:1455"
       - "54545:54545"
@@ -53,7 +53,7 @@ services:
     restart: unless-stopped
     command: --log-dir /app/logs
     ports:
-      - "${NEWAPI_BIND}:${NEWAPI_PORT}:3000"
+      - "127.0.0.1:${NEWAPI_PORT}:3000"
     environment:
       SQL_DSN: postgresql://newapi:${POSTGRES_PASSWORD}@postgres:5432/newapi
       REDIS_CONN_STRING: redis://:${REDIS_PASSWORD}@redis:6379
