@@ -103,7 +103,7 @@ data/cliproxy/auths/
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "newapi/gpt-5.4-mini",
+  "model": "newapi/gpt-6.1-sol",
   "provider": {
     "newapi": {
       "npm": "@ai-sdk/openai-compatible",
@@ -112,6 +112,7 @@ data/cliproxy/auths/
         "baseURL": "https://你的域名/v1"
       },
       "models": {
+        "gpt-6.1-sol": { "name": "GPT-6.1 Sol" },
         "gpt-5.4-mini": { "name": "GPT-5.4 Mini" },
         "gpt-5.6-sol": { "name": "GPT-5.6 Sol" }
       }
